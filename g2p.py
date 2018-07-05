@@ -63,8 +63,8 @@ def pronounce_fst(sigma_star):
   t_list.append(cdrewrite(t("b", "p"), "", "", sigma_star))
   t_list.append(cdrewrite(t("d", "t"), "", "", sigma_star))
   
-  t_list.append(cdrewrite(t("i", "ij"), vowel, difference(vowel, "i"), sigma_star))
-  t_list.append(cdrewrite(t("i", "j"), difference(sigma_star, vowel), difference(vowel, "i"), sigma_star))
+  t_list.append(cdrewrite(t("i", "ij"), vowel, difference(vowel, "i"), sigma_star, mode="opt"))
+  t_list.append(cdrewrite(t("i", "j"), difference(sigma_star, vowel), difference(vowel, "i"), sigma_star, mode="opt"))
   
   result = sigma_star
   for t_i in t_list:
@@ -142,21 +142,7 @@ if __name__ == '__main__':
   input_chars.extend(u"ćçčĉø")
   input_chars.extend([c.upper() for c in input_chars])
   
-  
-  
- 
-  #for i in range(300):
-    #try:
-      #letter = unichr(i)
-      #unicode_name = unicodedata.name(letter)
-      
-      #if unicode_name.startswith("LATIN CAPITAL LETTER") or unicode_name.startswith("LATIN SMALL LETTER"):
-        #input_chars.append(letter)
-    #except Exception,e: 
-      #pass
-  
   sigma_star = string_map(input_chars, input_token_type="utf8", output_token_type="utf8").closure().optimize()
-
 
   lowercaser_pairs = {}
   for c in input_chars:
@@ -178,38 +164,47 @@ if __name__ == '__main__':
   rewrite = rewrite_fst(sigma_star)
   variants = variants_fst(sigma_star)
   pronounce = pronounce_fst(sigma_star)
-  
-  
-  
 
-  transformer = rewrite * uncapitalizer *  variants * pronounce
-  transformer.invert().optimize()
-  #transformer = pronouncer
-
+  transformer = (rewrite * uncapitalizer *  variants * pronounce).optimize()
+  
+  inverse_transformer = transformer.copy()
+  inverse_transformer.invert()
+  inverse_transformer.optimize()
 
   if args.inverse:
-    char_lm = Fst.read(args.fst)
+    char_lm = None
+    if args.fst:
+      char_lm = Fst.read(args.fst)
     while 1:
       l = sys.stdin.readline()    
       pron = l.decode("utf-8").strip()
       pron = pron.replace("sh", u"š").replace("ou", u"õ").replace("ae", u"ä").replace("oe", u"ö").replace("ue", u"ä").replace("kk", u"K").replace("pp", u"P").replace("tt", u"T").replace(" ", "")
-      #result = optimize(l.strip() *  transformer * char_lm)
-      orig_word = acceptor(pron, token_type="utf8")
-      lattice = optimize(((orig_word * transformer).project(True) * char_lm))
-      #print(lattice * char_lm)
-
-      #lattice = optimize(word * char_lm)
-
-      #print(lattice)
-      #print(shortestpath((lattice).project(False)).stringify(token_type="utf8"))
-
-      
-      for (i, (word, pronunciation, w )) in enumerate(shortestpath(lattice.project(False), nshortest=args.nbest, unique=True).paths(input_token_type="utf8", output_token_type="utf8")):
+      orig_pron = acceptor(pron, token_type="utf8")
+      lattice = (orig_pron * inverse_transformer).project(True)
+      if char_lm:
+        lattice = lattice * char_lm
+      lattice.optimize()
+           
+      for (i, (pronunication, word, w )) in enumerate(shortestpath(lattice.project(False), nshortest=args.nbest, unique=True).paths(input_token_type="utf8", output_token_type="utf8")):
         variant_id_str = ""
         if i > 0:
           variant_id_str = "(%d)" % (i+1)
-        print(orig_word.stringify(token_type="utf8"), pronunciation, w)
+        print(orig_pron.stringify(token_type="utf8"), word, w)
         sys.stdout.flush()
-  else:
-    raise Exception("not implemented")
+  else:    
+    while 1:
+      l = sys.stdin.readline()    
+      word = l.decode("utf-8").strip()
+      orig_word = acceptor(word, token_type="utf8")
+      lattice = optimize((orig_word * transformer).project(True))
+     
+      for (i, (_, pronunciation, w )) in enumerate(shortestpath(lattice.project(False), nshortest=args.nbest, unique=True).paths(input_token_type="utf8", output_token_type="utf8")):        
+        pronunciation = u" ".join(list(pronunciation.decode("utf-8")))
+        pronunciation = pronunciation.replace(u"š", "sh").replace(u"õ", "ou").replace(u"ä", "ae").replace(u"ö", "oe").replace(u"ä", "ue").replace(u"K", "kk").replace(u"P", "pp").replace(u"T", "tt")
+        variant_id_str = ""
+        if i > 0:
+          variant_id_str = "(%d)" % (i+1)          
+        print(orig_word.stringify(token_type="utf8"), pronunciation)
+        sys.stdout.flush()
+    
   
