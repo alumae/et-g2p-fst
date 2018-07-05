@@ -1,0 +1,1 @@
+vestlused-dev.splitw2.vocab.chars.fst
