@@ -1,4 +1,4 @@
-# /usr/bin/env python2.7
+# /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
@@ -84,7 +84,7 @@ def variants_fst(sigma_star):
 def rewrite_fst(sigma_star):
   rewrite_map = {}
   for l in open(SRC_DIR + "/conf/rewrites.txt"):
-    ss = l.decode("utf-8").split()
+    ss = l.split()
     if len(ss) > 1:
       rewrite_map[ss[0]] = ss[1:]
   result = sigma_star
@@ -118,7 +118,7 @@ def rmdiacritics(char):
     Return the base character of char, by "removing" any
     diacritics like accents or curls and strokes and the like.
     '''
-    desc = unicodedata.name(unicode(char))
+    desc = unicodedata.name(char)
     cutoff = desc.find(' WITH ')
     if cutoff != -1:
         desc = desc[:cutoff]
@@ -177,7 +177,7 @@ if __name__ == '__main__':
       char_lm = Fst.read(args.fst)
     while 1:
       l = sys.stdin.readline()    
-      pron = l.decode("utf-8").strip()
+      pron = l.strip()
       pron = pron.replace("sh", u"š").replace("ou", u"õ").replace("ae", u"ä").replace("oe", u"ö").replace("ue", u"ä").replace("kk", u"K").replace("pp", u"P").replace("tt", u"T").replace(" ", "")
       orig_pron = acceptor(pron, token_type="utf8")
       lattice = (orig_pron * inverse_transformer).project(True)
@@ -189,17 +189,17 @@ if __name__ == '__main__':
         variant_id_str = ""
         if i > 0:
           variant_id_str = "(%d)" % (i+1)
-        print(orig_pron.stringify(token_type="utf8"), word, w)
+        print(orig_pron.stringify(token_type="utf8"), word, float(w))
         sys.stdout.flush()
   else:    
     while 1:
       l = sys.stdin.readline()    
-      word = l.decode("utf-8").strip()
+      word = l.strip()
       orig_word = acceptor(word, token_type="utf8")
       lattice = optimize((orig_word * transformer).project(True))
      
       for (i, (_, pronunciation, w )) in enumerate(shortestpath(lattice.project(False), nshortest=args.nbest, unique=True).paths(input_token_type="utf8", output_token_type="utf8")):        
-        pronunciation = u" ".join(list(pronunciation.decode("utf-8")))
+        pronunciation = u" ".join(list(pronunciation))
         pronunciation = pronunciation.replace(u"š", "sh").replace(u"õ", "ou").replace(u"ä", "ae").replace(u"ö", "oe").replace(u"ä", "ue").replace(u"K", "kk").replace(u"P", "pp").replace(u"T", "tt")
         variant_id_str = ""
         if i > 0:
