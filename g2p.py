@@ -176,7 +176,8 @@ if __name__ == '__main__':
     if args.fst:
       char_lm = Fst.read(args.fst)
     while 1:
-      l = sys.stdin.readline()    
+      l = sys.stdin.readline()   
+      if not l : break 
       pron = l.strip()
       pron = pron.replace("sh", u"š").replace("ou", u"õ").replace("ae", u"ä").replace("oe", u"ö").replace("ue", u"ä").replace("kk", u"K").replace("pp", u"P").replace("tt", u"T").replace(" ", "")
       orig_pron = acceptor(pron, token_type="utf8")
@@ -194,6 +195,7 @@ if __name__ == '__main__':
   else:    
     while 1:
       l = sys.stdin.readline()    
+      if not l : break
       word = l.strip()
       orig_word = acceptor(word, token_type="utf8")
       lattice = optimize((orig_word * transformer).project(True))
