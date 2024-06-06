@@ -228,12 +228,13 @@ if __name__ == '__main__':
         print(orig_pron, word, weight)
         sys.stdout.flush()
   else:    
+    g2p = get_transformer()
     while 1:
       l = sys.stdin.readline()    
       if not l : break
       word = l.strip()
       orig_word = accep(word)
-      lattice = optimize((orig_word @ get_transformer()).project('output'))
+      lattice = optimize((orig_word @ g2p).project('output'))
       
       for (i, pronunciation) in enumerate(shortestpath(lattice.project('input'), nshortest=args.nbest, unique=True).paths().ostrings()):        
         pronunciation = u" ".join(list(pronunciation))
