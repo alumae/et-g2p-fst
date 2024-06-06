@@ -68,8 +68,8 @@ def pronounce_fst(sigma_star):
   t_list.append(cdrewrite(cross("b", "p"), "", "", sigma_star))
   t_list.append(cdrewrite(cross("d", "t"), "", "", sigma_star))
   
-  t_list.append(cdrewrite(cross("i", "ij"), vowel, difference(vowel, "i"), sigma_star, mode="opt"))
-  t_list.append(cdrewrite(cross("i", "j"), difference(sigma_star, vowel), difference(vowel, "i"), sigma_star, mode="opt"))
+  t_list.append(cdrewrite(cross("i", "ij"), vowel, difference(vowel, "i"), sigma_star))
+  #t_list.append(cdrewrite(cross("i", "j"), difference(sigma_star, vowel), difference(vowel, "i"), sigma_star, mode="opt"))
   
   result = sigma_star
   for t_i in t_list:
@@ -233,7 +233,7 @@ if __name__ == '__main__':
       if not l : break
       word = l.strip()
       orig_word = accep(word)
-      lattice = optimize((orig_word @ transformer).project('output'))
+      lattice = optimize((orig_word @ get_transformer()).project('output'))
       
       for (i, pronunciation) in enumerate(shortestpath(lattice.project('input'), nshortest=args.nbest, unique=True).paths().ostrings()):        
         pronunciation = u" ".join(list(pronunciation))
